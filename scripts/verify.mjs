@@ -15,7 +15,9 @@ const CANDIDATES = [
   'C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe',
 ].filter(Boolean);
 const OPERA = CANDIDATES.find(existsSync) || null; // null = playwright-managed browser
-const browser = await chromium.launch({ executablePath: OPERA, headless: true, args: ['--no-sandbox'] });
+const launchOpts = { headless: true, args: ['--no-sandbox'] };
+if (OPERA) launchOpts.executablePath = OPERA;
+const browser = await chromium.launch(launchOpts);
 const page = await browser.newPage({ viewport: { width: 1600, height: 1000 } });
 const errors = [];
 page.on('pageerror', (e) => errors.push('pageerror: ' + e.message));
