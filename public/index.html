@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>BDO Wardrobe</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="assets/app-icon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<header class="topbar">
+  <div class="brand">
+    <img src="assets/app-icon.svg" alt="" class="brand-icon">
+    <h1>BDO <span>Wardrobe</span></h1>
+  </div>
+  <nav class="nav" id="nav">
+    <button data-view="gallery" class="nav-btn active">Gallery</button>
+    <button data-view="boxes" class="nav-btn">Outfit Boxes</button>
+    <button data-view="classes" class="nav-btn">Classes</button>
+    <button data-view="compare" class="nav-btn">Compare <span id="compare-count" class="pill" hidden>0</span></button>
+    <button data-view="wardrobe" class="nav-btn">My Wardrobe</button>
+    <button data-view="studio" class="nav-btn">Studio</button>
+  </nav>
+  <div class="topbar-search">
+    <input id="global-search" type="search" placeholder="Search outfits…  ( / )" autocomplete="off" spellcheck="false">
+  </div>
+</header>
+
+<main id="main">
+  <section id="view-gallery" class="view active">
+    <aside class="filters" id="filters">
+      <div class="filter-group">
+        <h3>Class</h3>
+        <div class="chip-row" id="class-chips"></div>
+      </div>
+      <div class="filter-group">
+        <h3>Box</h3>
+        <select id="box-select"><option value="">All boxes</option></select>
+      </div>
+      <div class="filter-group">
+        <h3>Rarity</h3>
+        <div class="chip-row" id="rarity-chips"></div>
+      </div>
+      <div class="filter-group">
+        <h3>Image</h3>
+        <div class="chip-row" id="quality-chips"></div>
+      </div>
+      <div class="filter-group">
+        <h3>Sort</h3>
+        <select id="sort-select">
+          <option value="class">Class → name</option>
+          <option value="name">Name A→Z</option>
+          <option value="quality">Best images first</option>
+          <option value="largest">Largest images first</option>
+        </select>
+      </div>
+      <button id="clear-filters" class="ghost-btn">Clear filters</button>
+      <div class="filter-stats" id="filter-stats"></div>
+    </aside>
+    <div class="gallery-wrap">
+      <div class="gallery" id="gallery"></div>
+      <div id="gallery-empty" class="empty" hidden>No outfits match these filters.</div>
+    </div>
+  </section>
+
+  <section id="view-boxes" class="view">
+    <div class="page-head"><h2>Outfit Boxes</h2><p>Every box in the catalog, with honest counts. Nested boxes list their choices.</p></div>
+    <div class="box-grid" id="box-grid"></div>
+  </section>
+
+  <section id="view-classes" class="view">
+    <div class="page-head"><h2>Classes</h2><p>Outfit counts and image coverage per class.</p></div>
+    <div class="class-grid" id="class-grid"></div>
+  </section>
+
+  <section id="view-compare" class="view">
+    <div class="page-head"><h2>Compare</h2><p>Up to 4 outfits side by side. Add from any card or the lightbox (C).</p></div>
+    <div class="compare-grid" id="compare-grid"></div>
+  </section>
+
+  <section id="view-wardrobe" class="view">
+    <div class="page-head">
+      <h2>My Wardrobe</h2>
+      <div class="wardrobe-tabs" id="wardrobe-tabs">
+        <button data-status="favorite" class="chip active">♥ Favorites</button>
+        <button data-status="owned" class="chip">Owned</button>
+        <button data-status="wishlist" class="chip">Wishlist</button>
+        <span class="spacer"></span>
+        <button id="wardrobe-export" class="ghost-btn">Export</button>
+        <button id="wardrobe-import" class="ghost-btn">Import</button>
+      </div>
+    </div>
+    <div class="gallery" id="wardrobe-gallery"></div>
+    <div id="wardrobe-empty" class="empty">Nothing here yet — mark outfits from any card (♥ / ✓ / ⭐).</div>
+  </section>
+
+  <section id="view-studio" class="view">
+    <div class="page-head"><h2>Data Studio</h2><p>Image library health and crawl controls.</p></div>
+    <div class="studio-grid">
+      <div class="card panel">
+        <h3>Image library</h3>
+        <div class="coverage-bar"><div id="coverage-fill"></div></div>
+        <div id="coverage-text" class="muted"></div>
+        <div class="studio-actions">
+          <button id="crawl-missing" class="primary-btn">Fetch missing images</button>
+          <button id="crawl-all" class="ghost-btn">Re-crawl everything</button>
+        </div>
+        <div id="crawl-status" class="muted"></div>
+      </div>
+      <div class="card panel">
+        <h3>Unresolved outfits</h3>
+        <div id="error-list" class="error-list muted">None 🎉</div>
+      </div>
+      <div class="card panel">
+        <h3>Export</h3>
+        <div class="studio-actions">
+          <button id="export-catalog" class="ghost-btn">Export catalog JSON</button>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<div id="lightbox" hidden>
+  <button class="lb-close" id="lb-close" aria-label="Close">✕</button>
+  <button class="lb-arrow lb-prev" id="lb-prev" aria-label="Previous">‹</button>
+  <button class="lb-arrow lb-next" id="lb-next" aria-label="Next">›</button>
+  <div class="lb-stage">
+    <div class="lb-img-wrap" id="lb-img-wrap"><img id="lb-img" alt=""></div>
+    <aside class="lb-info">
+      <div class="lb-class" id="lb-class"></div>
+      <h2 id="lb-name"></h2>
+      <div class="lb-quality" id="lb-quality"></div>
+      <dl class="lb-meta" id="lb-meta"></dl>
+      <div class="lb-boxes" id="lb-boxes"></div>
+      <div class="lb-actions">
+        <button data-act="favorite" class="chip">♥ Favorite</button>
+        <button data-act="owned" class="chip">✓ Owned</button>
+        <button data-act="wishlist" class="chip">⭐ Wishlist</button>
+        <button data-act="compare" class="chip">⇄ Compare</button>
+      </div>
+      <a id="lb-source" class="lb-source" target="_blank" rel="noopener">View source page ↗</a>
+    </aside>
+  </div>
+</div>
+
+<div id="toast" hidden></div>
+<input type="file" id="import-file" accept="application/json" hidden>
+<script src="js/app.js" type="module"></script>
+</body>
+</html>

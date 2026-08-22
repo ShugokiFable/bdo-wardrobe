@@ -1,0 +1,12 @@
+# --- runtime / local state (never commit) ---
+node_modules/
+*.log
+.DS_Store
+Thumbs.db
+
+# verify harness runs from %LOCALAPPDATA%/Temp — keep repo copy pristine
+verify-results/
+
+# OS / editor
+.vscode/
+.idea/

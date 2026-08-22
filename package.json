@@ -1,0 +1,13 @@
+{
+  "name": "bdo-wardrobe",
+  "version": "2.0.0",
+  "private": true,
+  "type": "module",
+  "engines": { "node": ">=22" },
+  "scripts": {
+    "start": "node server.mjs",
+    "build:catalog": "node scripts/build-catalog.mjs",
+    "crawl": "node scripts/crawl-images.mjs",
+    "check": "node --check server.mjs && node --check scripts/build-catalog.mjs && node --check scripts/crawl-images.mjs && node --check public/js/app.js && node --check public/js/state.js"
+  }
+}

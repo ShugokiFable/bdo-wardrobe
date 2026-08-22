@@ -1,0 +1,70 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Syntax-check every JS entrypoint
+        run: |
+          node --check server.mjs
+          for f in scripts/*.mjs lib/*.mjs; do
+            node --check "$f"
+          done
+          echo "all modules parse"
+
+      - name: Validate catalog integrity
+        run: |
+          node -e "
+            const fs = require('fs');
+            const cat = JSON.parse(fs.readFileSync('data/catalog.json', 'utf8'));
+            const imgs = JSON.parse(fs.readFileSync('data/images.json', 'utf8'));
+            const outfits = cat.outfits || cat;
+            if (!Array.isArray(outfits) || outfits.length < 4000) throw new Error('catalog too small: ' + outfits.length);
+            const ids = new Set(outfits.map(o => o.id));
+            if (ids.size !== outfits.length) throw new Error('duplicate outfit ids');
+            let missing = [];
+            for (const [id, im] of Object.entries(imgs.images)) {
+              if (!ids.has(id)) throw new Error('image index has unknown id: ' + id);
+              if (im.file && !fs.existsSync('public/assets/images/' + im.file)) missing.push(im.file);
+            }
+            if (missing.length) throw new Error(missing.length + ' indexed image files missing from disk, e.g. ' + missing[0]);
+            console.log('catalog OK:', outfits.length, 'outfits |', Object.keys(imgs.images).length, 'indexed images | every file on disk');
+          "
+
+      - name: Boot server and hit API
+        run: |
+          HOST=127.0.0.1 PORT=7861 node server.mjs &
+          sleep 2
+          curl --retry 10 --retry-connrefused --silent --fail http://127.0.0.1:7861/api/health
+          echo
+          curl --silent --fail http://127.0.0.1:7861/api/catalog | head -c 200
+          echo " …API OK"
+
+      - name: Install Playwright browsers
+        run: |
+          npm i --no-save playwright-core@1.49.1
+          npx playwright@1.49.1 install --with-deps chromium
+
+      - name: E2E verify suite (13 checks)
+        run: node scripts/verify.mjs
+
+      - name: Image budget check
+        run: |
+          SIZE=$(du -sm public/assets/images | cut -f1)
+          COUNT=$(ls public/assets/images | wc -l)
+          echo "images: $COUNT files, ${SIZE} MB"
+          # guard against accidental huge blobs sneaking in
+          BIG=$(find public/assets/images -size +8M | head -5)
+          if [ -n "$BIG" ]; then echo "oversized images: $BIG"; exit 1; fi
+          echo "budget OK"
