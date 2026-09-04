@@ -116,7 +116,8 @@ const server = createServer(async (req, res) => {
       return res.end('Not found');
     }
   } catch (error) {
-    return json(res, 500, { error: String(error.message || error) });
+    console.error(error);
+    return json(res, 500, { error: 'Internal server error' });
   }
 });
 
